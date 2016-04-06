@@ -7,7 +7,8 @@
             [markdown.core :refer [md->html]]
             [picture-gallery.ajax :refer [load-interceptors!]]
             [ajax.core :refer [GET POST]]
-            [picture-gallery.components.common :as c])
+            [picture-gallery.components.common :as c]
+            [picture-gallery.components.registration :as reg])
   (:import goog.History))
 
 (defn nav-link [uri title page collapsed?]
@@ -16,6 +17,16 @@
    [:a.nav-link
     {:href uri
      :on-click #(reset! collapsed? true)} title]])
+
+(defn user-menu []
+  (if-let [id (session/get :identity)]
+    [:ul.nav.navbar-nav.pull-xs-right
+     [:li.nav-item
+      [:a.dropdown-item.btn
+       {:on-click #(session/remove! :identity)}
+       [:i.fa.fa-user] " " id " | signout"]]]
+    [:ul.nav.navbar-nav.pull-xs-right
+     [:li.nav-item [reg/registration-button]]]))
 
 (defn navbar []
   (let [collapsed? (r/atom true)]
@@ -28,7 +39,8 @@
         [:a.navbar-brand {:href "#/"} "picture-gallery"]
         [:ul.nav.navbar-nav
          [nav-link "#/" "Home" :home collapsed?]
-         [nav-link "#/about" "About" :about collapsed?]]]])))
+         [nav-link "#/about" "About" :about collapsed?]]]
+       [user-menu]])))
 
 (defn about-page []
   [:div.container
@@ -55,10 +67,13 @@
   {:home #'home-page
    :about #'about-page})
 
+(defn modal []
+  (when-let [session-modal (session/get :modal)]
+    [session-modal]))
+
 (defn page []
   [:div
-   ;; modal test
-   [c/modal "I'm a Modal" [:p "this is the body"] "this is a footer"]
+   [modal]
    [(pages (session/get :page))]])
 
 ;; -------------------------
@@ -91,8 +106,9 @@
   (r/render [#'navbar] (.getElementById js/document "navbar"))
   (r/render [#'page] (.getElementById js/document "app")))
 
+
+
 (defn init! []
   (load-interceptors!)
-  (fetch-docs!)
   (hook-browser-navigation!)
   (mount-components))
