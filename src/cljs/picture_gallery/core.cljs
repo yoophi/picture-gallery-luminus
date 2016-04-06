@@ -6,7 +6,8 @@
             [goog.history.EventType :as HistoryEventType]
             [markdown.core :refer [md->html]]
             [picture-gallery.ajax :refer [load-interceptors!]]
-            [ajax.core :refer [GET POST]])
+            [ajax.core :refer [GET POST]]
+            [picture-gallery.components.common :as c])
   (:import goog.History))
 
 (defn nav-link [uri title page collapsed?]
@@ -55,7 +56,10 @@
    :about #'about-page})
 
 (defn page []
-  [(pages (session/get :page))])
+  [:div
+   ;; modal test
+   [c/modal "I'm a Modal" [:p "this is the body"] "this is a footer"]
+   [(pages (session/get :page))]])
 
 ;; -------------------------
 ;; Routes
