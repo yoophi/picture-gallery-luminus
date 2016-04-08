@@ -6,8 +6,9 @@
             [goog.history.EventType :as HistoryEventType]
             [markdown.core :refer [md->html]]
             [picture-gallery.ajax :refer [load-interceptors!]]
-            [ajax.core :refer [GET POST]]
+            [ajax.core :as ajax]
             [picture-gallery.components.common :as c]
+            [picture-gallery.components.login :as l]
             [picture-gallery.components.registration :as reg])
   (:import goog.History))
 
@@ -23,10 +24,15 @@
     [:ul.nav.navbar-nav.pull-xs-right
      [:li.nav-item
       [:a.dropdown-item.btn
-       {:on-click #(session/remove! :identity)}
-       [:i.fa.fa-user] " " id " | signout"]]]
+       {:on-click #(ajax/POST
+                    "/logout"
+                    {:handler (fn [] (session/remove! :identity))})}
+       [:i.fa.fa-user] " " id " | sign out"]]]
     [:ul.nav.navbar-nav.pull-xs-right
-     [:li.nav-item [reg/registration-button]]]))
+     [:li.nav-item [l/login-button]]
+     [:li.nav-item [reg/registration-button]]
+     ]
+    ))
 
 (defn navbar []
   (let [collapsed? (r/atom true)]
@@ -100,7 +106,7 @@
 ;; -------------------------
 ;; Initialize app
 (defn fetch-docs! []
-  (GET (str js/context "/docs") {:handler #(session/put! :docs %)}))
+  (ajax/GET (str js/context "/docs") {:handler #(session/put! :docs %)}))
 
 (defn mount-components []
   (r/render [#'navbar] (.getElementById js/document "navbar"))
