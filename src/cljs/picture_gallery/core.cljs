@@ -10,7 +10,8 @@
             [picture-gallery.components.common :as c]
             [picture-gallery.components.login :as l]
             [picture-gallery.components.registration :as reg]
-            [picture-gallery.components.upload :as u])
+            [picture-gallery.components.upload :as u]
+            [picture-gallery.components.gallery :as g])
   (:import goog.History))
 
 (defn nav-link [uri title page collapsed?]
@@ -50,6 +51,21 @@
          [nav-link "#/about" "About" :about collapsed?]]]
        [user-menu]])))
 
+(defn galleries [gallery-links]
+  [:div.text-xs-center
+   (for [row (partition-all 3 gallery-links)]
+     ^{:key row}
+     [:div.row
+      (for [{:keys [owner name]} row]
+        ^{:key (str owner name)}
+        [:div.col-sm-4
+         [:a {:href (str "#/gallery/" owner)}
+          [:img {:src (str js/context "/gallery/" owner "/" name)}]]])])])
+
+(defn list-galleries! []
+  (ajax/GET "/list-galleries"
+            {:handler #(session/put! :gallery-links %)}))
+
 (defn about-page []
   [:div.container
    [:div.row
@@ -57,23 +73,19 @@
      "this is the story of picture-gallery... work in progress"]]])
 
 (defn home-page []
-  [:div.container
-   [:div.jumbotron
-    [:h1 "Welcome to picture-gallery"]
-    [:p "Time to start building your site!"]
-    [:p [:a.btn.btn-primary.btn-lg {:href "http://luminusweb.net"} "Learn more »"]]]
-   [:div.row
-    [:div.col-md-12
-     [:h2 "Welcome to ClojureScript"]]]
-   (when-let [docs (session/get :docs)]
+  (list-galleries!)
+  (fn []
+    [:div.container
      [:div.row
-      [:div.col-md-12
-       [:div {:dangerouslySetInnerHTML
-              {:__html (md->html docs)}}]]])])
+      [:div.col-md-12>h2 "Available Galleries"]]
+     (when-let [gallery-links (session/get :gallery-links)]
+       [:div.row>div.col-md-12
+        [galleries gallery-links]])]))
 
 (def pages
-  {:home #'home-page
-   :about #'about-page})
+  {:home    #'home-page
+   :gallery #'g/gallery-page
+   :about   #'about-page})
 
 (defn modal []
   (when-let [session-modal (session/get :modal)]
@@ -89,10 +101,14 @@
 (secretary/set-config! :prefix "#")
 
 (secretary/defroute "/" []
-  (session/put! :page :home))
+                    (session/put! :page :home))
+
+(secretary/defroute "/gallery/:owner" [owner]
+                    (g/fetch-gallery-thumbs! owner)
+                    (session/put! :page :gallery))
 
 (secretary/defroute "/about" []
-  (session/put! :page :about))
+                    (session/put! :page :about))
 
 ;; -------------------------
 ;; History

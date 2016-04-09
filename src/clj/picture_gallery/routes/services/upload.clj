@@ -12,12 +12,6 @@
 
 (def thumb-prefix "thumb_")
 
-(defn file->byte-array [x]
-  (with-open [input  (FileInputStream. x)
-              buffer (ByteArrayOutputStream.)]
-    (clojure.java.io/copy input buffer)
-    (.toByteArray buffer)))
-
 (defn scale [img ratio width height]
   (let [scale (AffineTransform/getScaleInstance
                (double ratio) (double ratio))
@@ -25,13 +19,27 @@
                       scale AffineTransformOp/TYPE_BILINEAR)]
     (.filter transform-op img (BufferedImage. width height (.getType img)))))
 
-(defn scale-image [file thumb-size])
+(defn scale-image [file thumb-size]
+  (let [img        (ImageIO/read file)
+        img-width  (.getWidth img)
+        img-height (.getHeight img)
+        ratio      (/ thumb-size img-height)]
+    (scale img ratio (int (* img-width ratio)) thumb-size)))
 
-(defn image->byte-array [image])
+(defn image->byte-array [image]
+  (let [baos (ByteArrayOutputStream.)]
+    (ImageIO/write image "png" baos)
+    (.toByteArray baos)))
+
+(defn file->byte-array [x]
+  (with-open [input  (FileInputStream. x)
+              buffer (ByteArrayOutputStream.)]
+    (clojure.java.io/copy input buffer)
+    (.toByteArray buffer)))
 
 (defn save-image! [user {:keys [tempfile filename content-type]}]
   (try
-    (let [db-file-name (str user (.replaceAll filename "[^a-zA-Z0-9-_\\.]", ""))]
+    (let [db-file-name (str user (.replaceAll filename "[^a-zA-Z0-9-_\\.]" ""))]
       (db/save-file! {:owner user
                       :type  content-type
                       :name  db-file-name
@@ -46,16 +54,3 @@
       (log/error e)
       (internal-server-error "error"))))
 
-(require '[clojure.java.io :as io])
-
-(defn scale-image [file thumb-size]
-  (let [img        (ImageIO/read file)
-        img-width  (.getWidth img)
-        img-height (.getHeight img)
-        ratio      (/ thumb-size img-height)]
-    (scale img ratio (int (* img-width ratio)) thumb-size)))
-
-(defn image->byte-array [image]
-  (let [baos (ByteArrayOutputStream.)]
-    (ImageIO/write image "png" baos)
-    (.toByteArray baos)))
