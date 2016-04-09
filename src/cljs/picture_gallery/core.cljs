@@ -9,7 +9,8 @@
             [ajax.core :as ajax]
             [picture-gallery.components.common :as c]
             [picture-gallery.components.login :as l]
-            [picture-gallery.components.registration :as reg])
+            [picture-gallery.components.registration :as reg]
+            [picture-gallery.components.upload :as u])
   (:import goog.History))
 
 (defn nav-link [uri title page collapsed?]
@@ -22,6 +23,7 @@
 (defn user-menu []
   (if-let [id (session/get :identity)]
     [:ul.nav.navbar-nav.pull-xs-right
+     [:li.nav-item [u/upload-button]]
      [:li.nav-item
       [:a.dropdown-item.btn
        {:on-click #(ajax/POST
@@ -111,8 +113,6 @@
 (defn mount-components []
   (r/render [#'navbar] (.getElementById js/document "navbar"))
   (r/render [#'page] (.getElementById js/document "app")))
-
-
 
 (defn init! []
   (load-interceptors!)
