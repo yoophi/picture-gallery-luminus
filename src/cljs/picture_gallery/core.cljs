@@ -117,4 +117,5 @@
 (defn init! []
   (load-interceptors!)
   (hook-browser-navigation!)
+  (session/put! :identity js/identity)
   (mount-components))
