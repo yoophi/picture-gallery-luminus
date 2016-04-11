@@ -5,6 +5,12 @@
             [buddy.hashers :as hashers]
             [clojure.tools.logging :as log]))
 
+(defn delete-account! [identity]
+  (db/delete-account! identity)
+  (-> {:result :ok}
+      (response/ok)
+      (assoc :session nil)))
+
 (defn handle-registration-error [e]
   (if (and
        (instance? java.sql.SQLException e)
